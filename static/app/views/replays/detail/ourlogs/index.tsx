@@ -1,12 +1,11 @@
 import {useMemo, useRef} from 'react';
 import styled from '@emotion/styled';
 
+import {GridBody} from 'sentry/components/gridEditable/styles';
 import {useReplayContext} from 'sentry/components/replays/replayContext';
 import {SearchQueryBuilderProvider} from 'sentry/components/searchQueryBuilder/context';
-import {t} from 'sentry/locale';
 import {space} from 'sentry/styles/space';
 import {LogsAnalyticsPageSource} from 'sentry/utils/analytics/logsAnalyticsEvent';
-import useOrganization from 'sentry/utils/useOrganization';
 import {useSearchQueryBuilderProps} from 'sentry/views/explore/components/traceItemSearchQueryBuilder';
 import {LogsPageDataProvider} from 'sentry/views/explore/contexts/logs/logsPageData';
 import {LogsPageParamsProvider} from 'sentry/views/explore/contexts/logs/logsPageParams';
@@ -14,10 +13,13 @@ import {
   TraceItemAttributeProvider,
   useTraceItemAttributes,
 } from 'sentry/views/explore/contexts/traceItemAttributeContext';
-import {LogsInfiniteTable} from 'sentry/views/explore/logs/tables/logsInfiniteTable';
-import {LogsTable} from 'sentry/views/explore/logs/tables/logsTable';
+import {
+  EmptyRenderer,
+  ErrorRenderer,
+  LoadingRenderer,
+  LogsInfiniteTable,
+} from 'sentry/views/explore/logs/tables/logsInfiniteTable';
 import {TraceItemDataset} from 'sentry/views/explore/types';
-import EmptyState from 'sentry/views/replays/detail/emptyState';
 import FluidHeight from 'sentry/views/replays/detail/layout/fluidHeight';
 import {useReplayTraces} from 'sentry/views/replays/detail/trace/useReplayTraces';
 
@@ -36,30 +38,30 @@ export default function OurLogs() {
 
   if (indexError) {
     return (
-      <BorderedSection>
-        <EmptyState withIcon={false}>
-          <p>{t('Unable to retrieve logs')}</p>
-        </EmptyState>
+      <BorderedSection isStatus>
+        <StatusGridBody>
+          <ErrorRenderer />
+        </StatusGridBody>
       </BorderedSection>
     );
   }
 
   if (!replay || !indexComplete || !replayTraces) {
     return (
-      <BorderedSection>
-        <EmptyState>
-          <p>{t('Loading logs...')}</p>
-        </EmptyState>
+      <BorderedSection isStatus>
+        <GridBody>
+          <LoadingRenderer />
+        </GridBody>
       </BorderedSection>
     );
   }
 
   if (!replayTraces.length) {
     return (
-      <BorderedSection>
-        <EmptyState>
-          <p>{t('No logs found for this replay')}</p>
-        </EmptyState>
+      <BorderedSection isStatus>
+        <StatusGridBody>
+          <EmptyRenderer hasSearch={false} />
+        </StatusGridBody>
       </BorderedSection>
     );
   }
@@ -82,8 +84,6 @@ export default function OurLogs() {
 function OurLogsContent() {
   const {attributes: stringAttributes} = useTraceItemAttributes('string');
   const {attributes: numberAttributes} = useTraceItemAttributes('number');
-  const organization = useOrganization();
-  const hasInfiniteFeature = organization.features.includes('ourlogs-live-refresh');
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   const searchQueryBuilderProps = useSearchQueryBuilderProps({
@@ -97,33 +97,33 @@ function OurLogsContent() {
 
   return (
     <SearchQueryBuilderProvider {...searchQueryBuilderProps}>
-      <PaddedFluidHeight ref={scrollContainerRef} fullHeight={!hasInfiniteFeature}>
-        {hasInfiniteFeature ? (
-          <LogsInfiniteTable
-            stringAttributes={stringAttributes}
-            numberAttributes={numberAttributes}
-            showHeader
-            allowPagination
-            scrollContainer={scrollContainerRef}
-          />
-        ) : (
-          <LogsTable showHeader={false} allowPagination />
-        )}
+      <PaddedFluidHeight ref={scrollContainerRef}>
+        <LogsInfiniteTable
+          stringAttributes={stringAttributes}
+          numberAttributes={numberAttributes}
+          showHeader
+          allowPagination
+          scrollContainer={scrollContainerRef}
+        />
       </PaddedFluidHeight>
     </SearchQueryBuilderProvider>
   );
 }
 
-const PaddedFluidHeight = styled('div')<{fullHeight?: boolean}>`
+const PaddedFluidHeight = styled('div')`
   padding-top: ${space(1)};
   display: flex;
   flex-direction: column;
   flex-wrap: nowrap;
   flex-grow: 1;
-  ${p => p.fullHeight && 'height: 100%;'}
 `;
 
-const BorderedSection = styled(FluidHeight)`
+const BorderedSection = styled(FluidHeight)<{isStatus?: boolean}>`
   border: 1px solid ${p => p.theme.border};
   border-radius: ${p => p.theme.borderRadius};
+  ${p => p.isStatus && 'justify-content: center;'}
+`;
+
+const StatusGridBody = styled(GridBody)`
+  height: unset;
 `;

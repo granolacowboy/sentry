@@ -36,7 +36,9 @@ type Props = {
 function FocusTabs({isVideoReplay}: Props) {
   const organization = useOrganization();
   const {getActiveTab, setActiveTab} = useActiveReplayTab({isVideoReplay});
-  const hasLogsFeature = useOrganization().features.includes('ourlogs-enabled');
+  const hasLogsFeature =
+    organization.features.includes('ourlogs-enabled') &&
+    organization.features.includes('ourlogs-infinite-scroll');
   const activeTab = getActiveTab();
 
   const tabs = Object.entries(getReplayTabs({isVideoReplay, hasLogsFeature})).filter(
