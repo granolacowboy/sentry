@@ -204,6 +204,9 @@ importers:
       '@sentry/status-page-list':
         specifier: ^0.6.0
         version: 0.6.0
+      '@sentry/ui':
+        specifier: workspace:*
+        version: link:static/ui
       '@sentry/webpack-plugin':
         specifier: ^3.4.0
         version: 3.4.0(encoding@0.1.13)(webpack@5.99.6(esbuild@0.25.3))
@@ -653,6 +656,8 @@ importers:
       fsevents:
         specifier: ^2.3.2
         version: 2.3.2
+
+  static/ui: {}
 
 packages:
 

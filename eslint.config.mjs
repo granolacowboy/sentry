@@ -1065,6 +1065,10 @@ export default typescript.config([
           type: 'core',
           pattern: 'static/app/components/core',
         },
+        {
+          type: '@sentry/ui',
+          pattern: 'static/ui',
+        },
         // --- sentry ---
         {
           type: 'sentry-images',
@@ -1129,7 +1133,7 @@ export default typescript.config([
           rules: [
             {
               from: ['sentry*'],
-              allow: ['core*', 'sentry*'],
+              allow: ['core*', 'sentry*', '@sentry/*'],
             },
             {
               from: ['getsentry*'],
