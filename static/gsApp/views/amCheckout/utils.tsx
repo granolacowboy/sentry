@@ -386,7 +386,7 @@ function recordAnalytics(
   // TODO(data categories): in future, we should just be able to pass data.selectedProducts
   const selectableProductData = {
     [SelectableProduct.SEER]: {
-      enabled: data.seer ?? false,
+      enabled: data.seer,
       previously_enabled:
         subscription.reservedBudgets?.some(
           budget =>
