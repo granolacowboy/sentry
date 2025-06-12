@@ -90,7 +90,7 @@ type GetsentryEventParameters = {
   'checkout.product_select': Record<
     SelectableProduct,
     {
-      enabled: boolean | undefined;
+      enabled: undefined | boolean;
       previously_enabled: boolean;
     }
   > &
