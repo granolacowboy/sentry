@@ -1502,13 +1502,9 @@ class GroupDeleteTest(APITestCase, SnubaTestCase):
 
         return groups
 
-    def assert_groups_being_deleted(self, groups: Sequence[Group]) -> None:
+    def assert_groups_marked_for_deletion(self, groups: Sequence[Group]) -> None:
         for g in groups:
             assert Group.objects.get(id=g.id).status == GroupStatus.PENDING_DELETION
-            assert not GroupHash.objects.filter(group_id=g.id).exists()
-
-        # This is necessary before calling the delete task
-        Group.objects.filter(id__in=[g.id for g in groups]).update(status=GroupStatus.UNRESOLVED)
 
     def assert_groups_are_gone(self, groups: Sequence[Group]) -> None:
         for g in groups:
@@ -1556,10 +1552,12 @@ class GroupDeleteTest(APITestCase, SnubaTestCase):
 
         assert response.status_code == 204
 
-        self.assert_groups_being_deleted([group1, group2])
+        self.assert_groups_marked_for_deletion([group1, group2])
         # Group 4 is not deleted because it belongs to a different project
         self.assert_groups_not_deleted([group3, group4])
 
+        # This is necessary to undo the changes made by the previous delete call
+        Group.objects.filter(id__in=[g.id for g in groups]).update(status=GroupStatus.UNRESOLVED)
         with self.tasks():
             response = self.client.delete(url, format="json")
 
@@ -1611,8 +1609,10 @@ class GroupDeleteTest(APITestCase, SnubaTestCase):
         response = self.client.delete(url, format="json")
 
         assert response.status_code == 204
-        self.assert_groups_being_deleted(groups)
+        self.assert_groups_marked_for_deletion(groups)
 
+        # This is necessary to undo the changes made by the previous delete call
+        Group.objects.filter(id__in=[g.id for g in groups]).update(status=GroupStatus.UNRESOLVED)
         with self.tasks():
             response = self.client.delete(url, format="json")
 
@@ -1636,7 +1636,7 @@ class GroupDeleteTest(APITestCase, SnubaTestCase):
             assert response.status_code == 204
             self.assert_groups_are_gone(groups)
 
-    @patch("sentry.api.helpers.group_index.delete.call_delete_seer_grouping_records_by_hash")
+    @patch("sentry.tasks.delete_seer_grouping_records.delete_seer_grouping_records_by_hash")
     @patch("sentry.utils.audit.log_service.record_audit_log")
     def test_audit_log_even_if_exception_raised(
         self, mock_record_audit_log: Mock, mock_seer_delete: Mock
