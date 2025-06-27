@@ -1,12 +1,13 @@
-import {Fragment, useContext} from 'react';
+import {useContext} from 'react';
 import styled from '@emotion/styled';
 
-import {Button, type ButtonProps} from 'sentry/components/core/button';
+import {Button} from 'sentry/components/core/button';
+import type {LinkButtonProps} from 'sentry/components/core/button/linkButton';
 import {LinkButton} from 'sentry/components/core/button/linkButton';
 import {CompositeSelect} from 'sentry/components/core/compactSelect/composite';
 import {SelectContext} from 'sentry/components/core/compactSelect/control';
 import {Flex} from 'sentry/components/core/layout';
-import {MenuListItem, type MenuListItemProps} from 'sentry/components/core/menuListItem';
+import {MenuListItem} from 'sentry/components/core/menuListItem';
 import {Tooltip} from 'sentry/components/core/tooltip';
 import ErrorBoundary from 'sentry/components/errorBoundary';
 import type {
@@ -24,42 +25,7 @@ import type {Project} from 'sentry/types/project';
 import {trackAnalytics} from 'sentry/utils/analytics';
 import useOrganization from 'sentry/utils/useOrganization';
 
-function getActionLabelAndTextValue({
-  action,
-  integrationDisplayName,
-}: {
-  action: ExternalIssueAction;
-  integrationDisplayName: string;
-}): {
-  label: string | React.JSX.Element;
-  textValue: string;
-  details?: string | React.JSX.Element;
-} {
-  // If there's no subtext or subtext matches name, just show name
-  if (!action.nameSubText || action.nameSubText === action.name) {
-    return {
-      label: action.name,
-      textValue: action.name,
-    };
-  }
-
-  // If action name matches integration name, just show subtext
-  if (action.name === integrationDisplayName) {
-    return {
-      label: action.nameSubText,
-      textValue: `${action.name} ${action.nameSubText}`,
-    };
-  }
-
-  // Otherwise show both name and subtext
-  return {
-    label: action.name,
-    details: action.nameSubText,
-    textValue: `${action.name} ${action.nameSubText}`,
-  };
-}
-
-interface ExternalIssueListProps {
+interface StreamlinedExternalIssueListProps {
   event: Event;
   group: Group;
   project: Project;
@@ -69,7 +35,7 @@ export function StreamlinedExternalIssueList({
   group,
   event,
   project,
-}: ExternalIssueListProps) {
+}: StreamlinedExternalIssueListProps) {
   const {isLoading, integrations, linkedIssues} = useGroupExternalIssues({
     group,
     event,
@@ -124,89 +90,87 @@ export function StreamlinedExternalIssueList({
 
 function ExternalIssueMenu(props: ReturnType<typeof useGroupExternalIssues>) {
   const organization = useOrganization({allowNull: false});
-
   return (
-    <Fragment>
-      <CompositeSelect
-        trigger={triggerProps => (
-          <Button {...triggerProps} size="zero" icon={<IconAdd />}>
-            {props.linkedIssues.length === 0 ? t('Add Linked Issue') : null}
-          </Button>
-        )}
-        // Required for submenu interactions
-        isDismissable={false}
-        menuTitle={t('Add Linked Issue')}
-        hideOptions={props.integrations.length === 0}
-        menuBody={props.integrations.length === 0 && <ExternalIssueMenuEmpty />}
-        menuFooter={props.integrations.length > 0 && <ExternalIssueManageLink />}
-      >
-        <CompositeSelect.Region
-          closeOnSelect={({value}) => {
-            const integration = props.integrations.find(({key}) => key === value);
-            if (!integration) {
-              return true;
-            }
-            return integration.actions.length === 1;
-          }}
-          onChange={({value}) => {
-            const integration = props.integrations.find(({key}) => key === value);
-            if (!integration) {
-              return;
-            }
-            if (integration.actions.length === 1) {
-              const action = integration.actions[0]!;
-              action.onClick();
-              trackAnalytics('feedback.details-integration-issue-clicked', {
-                organization,
-                integration_key: integration.key,
-              });
-              return;
-            }
-          }}
-          options={props.integrations.map(integration => ({
-            key: integration.key,
-            disabled: integration.disabled,
-            leadingItems: (
-              <Flex align="center" justify="center" style={{minHeight: 19}}>
-                {integration.displayIcon}
-              </Flex>
-            ),
-            tooltip: integration.disabled ? integration.disabledText : undefined,
-            label: integration.displayName,
-            hideCheck: true,
-            value: integration.key,
-            textValue: integration.key,
-            details:
-              integration.actions.length > 1 ? (
-                <ExternalIssueSubmenu integration={integration} />
-              ) : undefined,
-            showDetailsInOverlay: true,
-          }))}
-        />
-      </CompositeSelect>
-    </Fragment>
+    <CompositeSelect
+      trigger={triggerProps => (
+        <Button
+          {...triggerProps}
+          size="zero"
+          icon={<IconAdd />}
+          aria-label={t('Add Linked Issue')}
+        >
+          {props.linkedIssues.length === 0 ? t('Add Linked Issue') : null}
+        </Button>
+      )}
+      hideOptions={props.integrations.length === 0}
+      menuBody={props.integrations.length === 0 && <ExternalIssueMenuEmpty />}
+      menuFooter={props.integrations.length > 0 && <ExternalIssueManageLink />}
+    >
+      <CompositeSelect.Region
+        closeOnSelect={({value}) => {
+          const integration = props.integrations.find(({key}) => key === value);
+          if (!integration) {
+            return true;
+          }
+          return integration.actions.length === 1;
+        }}
+        onChange={({value}) => {
+          const integration = props.integrations.find(({key}) => key === value);
+          if (!integration) {
+            return;
+          }
+          if (integration.actions.length === 1) {
+            integration.actions[0]?.onClick();
+            trackAnalytics('feedback.details-integration-issue-clicked', {
+              organization,
+              integration_key: integration.key,
+            });
+            return;
+          }
+        }}
+        options={props.integrations.map(integration => ({
+          key: integration.key,
+          disabled: integration.disabled,
+          leadingItems: (
+            <Flex align="center" justify="center" style={{minHeight: 19}}>
+              {integration.displayIcon}
+            </Flex>
+          ),
+          tooltip: integration.disabled ? integration.disabledText : undefined,
+          label: integration.displayName,
+          hideCheck: true,
+          value: integration.key,
+          textValue: integration.key,
+          details:
+            integration.actions.length > 1 ? (
+              <ExternalIssueSubmenu integration={integration} />
+            ) : undefined,
+          showDetailsInOverlay: true,
+        }))}
+      />
+    </CompositeSelect>
   );
 }
 
 function ExternalIssueSubmenu(props: {integration: ExternalIssueIntegration}) {
-  const {integration} = props;
   const {overlayState} = useContext(SelectContext);
-  return integration.actions.map(action => {
-    const itemProps: MenuListItemProps = {
-      tooltip: action.disabled ? action.disabledText : undefined,
-      disabled: action.disabled,
-      ...getActionLabelAndTextValue({
-        action,
-        integrationDisplayName: integration.displayName,
-      }),
-    };
-    const callbackProps: Record<string, () => void> = {
-      onPointerDown: () => {
-        overlayState?.close();
-        action.onClick();
-      },
-    };
-    return <MenuListItem key={action.id} {...callbackProps} {...itemProps} />;
+
+  return props.integration.actions.map(action => {
+    return (
+      <MenuListItem
+        key={action.id}
+        tooltip={action.disabled ? action.disabledText : undefined}
+        disabled={action.disabled}
+        {...getActionLabelAndTextValue({
+          action,
+          integrationDisplayName: props.integration.displayName,
+        })}
+        onPointerDown={() => {
+          overlayState?.close();
+          action.onClick();
+        }}
+      />
+    );
   });
 }
 
@@ -219,13 +183,13 @@ function ExternalIssueMenuEmpty() {
       justify="center"
       gap={space(2)}
     >
-      <EmptyStateText>{t('No issue linking integration installed')}</EmptyStateText>
+      <EmptyStateText>{t('Track this issue in Jira, GitHub, etc.')}</EmptyStateText>
       <ExternalIssueManageLink size="sm" priority="primary" />
     </Flex>
   );
 }
 
-function ExternalIssueManageLink(props: Pick<ButtonProps, 'size' | 'priority'>) {
+function ExternalIssueManageLink(props: Pick<LinkButtonProps, 'size' | 'priority'>) {
   const organization = useOrganization({allowNull: false});
 
   return (
@@ -238,6 +202,41 @@ function ExternalIssueManageLink(props: Pick<ButtonProps, 'size' | 'priority'>) 
       {t('Manage Integrations')}
     </LinkButton>
   );
+}
+
+function getActionLabelAndTextValue({
+  action,
+  integrationDisplayName,
+}: {
+  action: ExternalIssueAction;
+  integrationDisplayName: string;
+}): {
+  label: string | React.JSX.Element;
+  textValue: string;
+  details?: string | React.JSX.Element;
+} {
+  // If there's no subtext or subtext matches name, just show name
+  if (!action.nameSubText || action.nameSubText === action.name) {
+    return {
+      label: action.name,
+      textValue: action.name,
+    };
+  }
+
+  // If action name matches integration name, just show subtext
+  if (action.name === integrationDisplayName) {
+    return {
+      label: action.nameSubText,
+      textValue: `${action.name} ${action.nameSubText}`,
+    };
+  }
+
+  // Otherwise show both name and subtext
+  return {
+    label: action.name,
+    details: action.nameSubText,
+    textValue: `${action.name} ${action.nameSubText}`,
+  };
 }
 
 const EmptyStateText = styled('span')`
