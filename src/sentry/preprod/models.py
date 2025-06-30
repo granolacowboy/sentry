@@ -116,6 +116,9 @@ class PreprodArtifact(DefaultFieldsModel):
     # Size analysis wont necessarily be run on every artifact (based on quotas)
     analysis_file_id = BoundedBigIntegerField(db_index=True, null=True)
 
+    # Installable file like IPA or APK
+    installable_app_file_id = BoundedBigIntegerField(db_index=True, null=True)
+
     class Meta:
         app_label = "preprod"
         db_table = "sentry_preprodartifact"
@@ -219,6 +222,9 @@ class PreprodArtifactSizeMetrics(DefaultFieldsModel):
     max_install_size = BoundedPositiveBigIntegerField(null=True)
     min_download_size = BoundedPositiveBigIntegerField(null=True)
     max_download_size = BoundedPositiveBigIntegerField(null=True)
+
+    # Size analysis wont necessarily be run on every artifact (based on quotas)
+    analysis_file_id = BoundedBigIntegerField(db_index=True, null=True)
 
     class Meta:
         app_label = "preprod"
