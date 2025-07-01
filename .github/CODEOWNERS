@@ -505,6 +505,9 @@ tests/sentry/api/endpoints/test_organization_dashboard_widget_details.py     @ge
 /src/sentry/utils/platform_categories.py                                         @getsentry/telemetry-experience
 /src/sentry/sentry_metrics/querying/                                             @getsentry/telemetry-experience
 /tests/sentry/sentry_metrics/querying/                                           @getsentry/telemetry-experience
+/src/sentry/relay/config/ai_model_costs.py                                       @getsentry/telemetry-experience
+/src/sentry/tasks/ai_agent_monitoring.py                                         @getsentry/telemetry-experience
+/tests/sentry/tasks/test_ai_agent_monitoring.py                                  @getsentry/telemetry-experience
 
 /static/app/actionCreators/metrics.tsx                                           @getsentry/telemetry-experience
 /static/app/data/platformCategories.tsx                                          @getsentry/telemetry-experience
@@ -687,6 +690,7 @@ tests/sentry/api/endpoints/test_organization_dashboard_widget_details.py     @ge
 ## Migrations
 /src/sentry/migrations/                                  @getsentry/owners-migrations
 /src/sentry/*/migrations/                                @getsentry/owners-migrations
+/src/social_auth/migrations/                             @getsentry/owners-migrations
 
 # Preprod build artifact analysis
 /src/sentry/preprod                                   @getsentry/emerge-tools
