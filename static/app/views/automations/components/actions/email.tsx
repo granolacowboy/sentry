@@ -14,6 +14,7 @@ import useOrganization from 'sentry/utils/useOrganization';
 import {useTeamsById} from 'sentry/utils/useTeamsById';
 import useUserFromId from 'sentry/utils/useUserFromId';
 import {useActionNodeContext} from 'sentry/views/automations/components/actionNodes';
+import {useAutomationBuilderErrorContext} from 'sentry/views/automations/components/automationBuilderErrorContext';
 
 enum FallthroughChoiceType {
   ALL_MEMBERS = 'AllMembers',
@@ -97,6 +98,7 @@ function TargetTypeField() {
 
 function IdentifierField() {
   const {action, actionId, onUpdate} = useActionNodeContext();
+  const {removeError} = useAutomationBuilderErrorContext();
   const organization = useOrganization();
 
   if (action.config.target_type === ActionTarget.TEAM) {
@@ -110,6 +112,7 @@ function IdentifierField() {
               config: {...action.config, target_identifier: value.actor.id},
               data: {},
             });
+            removeError(action.id);
           }}
           useId
           styles={selectControlStyles}
@@ -124,12 +127,13 @@ function IdentifierField() {
           organization={organization}
           key={`${actionId}.config.target_identifier`}
           value={action.config.target_identifier}
-          onChange={(value: any) =>
+          onChange={(value: any) => {
             onUpdate({
               config: {...action.config, target_identifier: value.actor.id},
               data: {},
-            })
-          }
+            });
+            removeError(action.id);
+          }}
           styles={selectControlStyles}
         />
       </SelectWrapper>
@@ -152,6 +156,31 @@ function FallthroughField() {
       }
     />
   );
+}
+
+export function validateEmailAction(action: Action): string | undefined {
+  if (!action.config.target_type) {
+    return t('You must notification target type.');
+  }
+  if (
+    action.config.target_type === ActionTarget.ISSUE_OWNERS &&
+    !action.data.fallthroughType
+  ) {
+    return t('You must specify a fallthrough type.');
+  }
+  if (
+    action.config.target_type === ActionTarget.TEAM &&
+    !action.config.target_identifier
+  ) {
+    return t('You must specify a team.');
+  }
+  if (
+    action.config.target_type === ActionTarget.USER &&
+    !action.config.target_identifier
+  ) {
+    return t('You must specify a member.');
+  }
+  return undefined;
 }
 
 const SelectWrapper = styled('div')`

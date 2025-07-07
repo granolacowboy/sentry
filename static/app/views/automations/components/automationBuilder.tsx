@@ -182,10 +182,9 @@ function ActionFilterBlock({
             then: <ConditionBadge />,
           })}
         </StepLead>
-        {/* TODO: add actions dropdown here */}
         <ActionNodeList
           placeholder={t('Select an action')}
-          group={`actionFilters.${actionFilter.id}`}
+          conditionGroupId={actionFilter.id}
           actions={actionFilter?.actions || []}
           onAddRow={(id, type) => actions.addIfAction(actionFilter.id, id, type)}
           onDeleteRow={id => actions.removeIfAction(actionFilter.id, id)}

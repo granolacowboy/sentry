@@ -1,6 +1,6 @@
 import {AutomationBuilderSelect} from 'sentry/components/workflowEngine/form/automationBuilderSelect';
 import {ActionMetadata} from 'sentry/components/workflowEngine/ui/actionMetadata';
-import {tct} from 'sentry/locale';
+import {t, tct} from 'sentry/locale';
 import type {SelectValue} from 'sentry/types/core';
 import type {Action, ActionHandler} from 'sentry/types/workflowEngine/actions';
 import {ActionType} from 'sentry/types/workflowEngine/actions';
@@ -62,4 +62,17 @@ function PriorityField() {
       }}
     />
   );
+}
+
+export function validateOpsgenieAction(action: Action): string | undefined {
+  if (!action.integrationId) {
+    return t('You must specify an Opsgenie configuration.');
+  }
+  if (!action.config.target_identifier) {
+    return t('You must specify a team.');
+  }
+  if (!action.data.priority) {
+    return t('You must specify a priority.');
+  }
+  return undefined;
 }

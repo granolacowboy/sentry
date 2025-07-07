@@ -1,5 +1,5 @@
 import {AutomationBuilderSelect} from 'sentry/components/workflowEngine/form/automationBuilderSelect';
-import {tct} from 'sentry/locale';
+import {t, tct} from 'sentry/locale';
 import type {SelectValue} from 'sentry/types/core';
 import type {Action, ActionHandler} from 'sentry/types/workflowEngine/actions';
 import {useActionNodeContext} from 'sentry/views/automations/components/actionNodes';
@@ -48,4 +48,11 @@ function ServicesField() {
       }}
     />
   );
+}
+
+export function validateWebhookAction(action: Action): string | undefined {
+  if (!action.config.target_identifier) {
+    return t('You must specify an integration.');
+  }
+  return undefined;
 }
